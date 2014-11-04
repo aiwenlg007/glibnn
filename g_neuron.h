@@ -44,5 +44,8 @@ gdouble g_neuron_get_activation(GNeuron *neuron);
 void g_neuron_display(GNeuron *neuron);
 void g_neuron_update_weight(GNeuron *neuron, gdouble di,gdouble learning_rate, gdouble inertial);
 gdouble g_neuron_get_error_weighted(GNeuron* neuron, gint i);
+gdouble* g_neuron_get_weights(GNeuron *neuron);
+gint g_neuron_get_ninputs(GNeuron *neuron);
+void g_neuron_set_weights(GNeuron *neuron, gdouble* weights);
 G_END_DECLS
 #endif

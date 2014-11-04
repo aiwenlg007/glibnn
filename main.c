@@ -29,18 +29,31 @@ int main(int argc, char **argv)
 	gdouble in[4] = {1.0f, -0.5f, 0.5f, 0.0f};
 	gdouble out[2] = {1.0f, 0.0f};
 
-	GNeuralNetwork *neural_network = g_neural_network_new(3,
-														(const gint[]){2, 3, 2},
-														0.9f,
-														0.9f,
-														0.01,
-														4);
+    GList *layers_list = NULL;
+    layers_list = g_list_append(layers_list, GINT_TO_POINTER(2));
+    layers_list = g_list_append(layers_list, GINT_TO_POINTER(3));
+    layers_list = g_list_append(layers_list, GINT_TO_POINTER(2));
+
+    GNeuralNetworkProperties ppt = {
+        {.learning_rate  = 0.9f,
+         .inertial_rate  = 0.9f,
+         .error_rate     = 0.05f}
+    };
+
+	GNeuralNetwork *neural_network = g_neural_network_new(layers_list, ppt, 4);
 
 	g_neural_network_set_input(neural_network, in);
 	g_neural_network_set_desired_output(neural_network, out);
 
 	g_neural_network_back_propagation_learning(neural_network);
 
+    g_neural_network_save(neural_network, "glibnn_test.txt");
+
     g_object_unref(G_OBJECT(neural_network));
+
+	neural_network = g_neural_network_new_from_file("glibnn_test.txt");
+
+    g_neural_network_save(neural_network, "glibnn_test_1.txt");
+
     return 0;
 }

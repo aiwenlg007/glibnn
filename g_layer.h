@@ -3,6 +3,8 @@
 
 #include <glib.h>
 #include <glib-object.h>
+#include "g_neuron.h"
+
 
 G_BEGIN_DECLS
 
@@ -47,5 +49,8 @@ gdouble g_layer_get_error_rate(GLayer *layer);
 gdouble* g_layer_get_error_vector(GLayer *layer);
 void g_layer_update_layer_weights(GLayer *layer, gdouble learning_rate, gdouble inertial, gint next_nneurons);
 gint g_layer_get_nneurons(GLayer *layer);
+gint g_layer_get_id(GLayer *layer);
+GNeuron* g_layer_get_nth_neuron(GLayer* layer, gint i);
+void g_layer_set_neuron_weights(GLayer *layer, GList *weights);
 G_END_DECLS
 #endif

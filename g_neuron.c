@@ -263,3 +263,37 @@ gdouble g_neuron_get_error_weighted(GNeuron* neuron, gint i)
     //return the contribution of the ième previous layer'sneurons
     return priv->di * priv->weights[i];
 }
+
+gdouble* g_neuron_get_weights(GNeuron *neuron)
+{
+    g_return_val_if_fail(NULL != neuron, NULL);
+
+    neuron->priv = G_TYPE_INSTANCE_GET_PRIVATE (neuron,
+			TYPE_G_NEURON, GNeuronPrivate);
+	GNeuronPrivate *priv = neuron->priv;
+
+    return priv->weights;
+}
+
+gint g_neuron_get_ninputs(GNeuron *neuron)
+{
+    g_return_val_if_fail(NULL != neuron, -1);
+
+    neuron->priv = G_TYPE_INSTANCE_GET_PRIVATE (neuron,
+			TYPE_G_NEURON, GNeuronPrivate);
+	GNeuronPrivate *priv = neuron->priv;
+
+    return priv->ninput;
+}
+
+void g_neuron_set_weights(GNeuron *neuron, gdouble* weights)
+{
+    g_return_if_fail(NULL != neuron);
+	g_return_if_fail(NULL != weights);
+
+    neuron->priv = G_TYPE_INSTANCE_GET_PRIVATE (neuron,
+			TYPE_G_NEURON, GNeuronPrivate);
+	GNeuronPrivate *priv = neuron->priv;
+
+	memmove(priv->weights, weights, priv->ninput*sizeof(gdouble));
+}

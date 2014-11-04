@@ -4,6 +4,18 @@
 #include <glib.h>
 #include <glib-object.h>
 
+typedef union
+{
+    struct
+    {
+      gdouble learning_rate;
+      gdouble inertial_rate;
+      gdouble error_rate;
+    } property;
+
+    gdouble ptab[3];
+}GNeuralNetworkProperties;
+
 G_BEGIN_DECLS
 
 #define TYPE_G_NEURAL_NETWORK                  (g_neural_network_get_type ())
@@ -36,18 +48,19 @@ struct _GNeuralNetworkClass
 
 GType g_neural_network_get_type (void) G_GNUC_CONST;
 
-GNeuralNetwork* g_neural_network_new(const gint num_layers, 
-									 const gint* neurons_per_layers,
-									 const gdouble learning_rate,
-									 const gdouble inertie,
-									 const gdouble error_rate,
+GNeuralNetwork* g_neural_network_new(GList *layers_list,
+									 GNeuralNetworkProperties ppt,
 									 const gint ninputs);
+
+GNeuralNetwork* g_neural_network_new_from_file(gchar *path);
 
 void g_neural_network_back_propagation_learning(GNeuralNetwork *neural_network);
 
 void g_neural_network_set_input(GNeuralNetwork *neural_network,
 								gdouble *input);
-									
+
 void g_neural_network_set_desired_output(GNeuralNetwork *neural_network,
 										gdouble *desired);
+
+void g_neural_network_save(GNeuralNetwork *neural_network,const gchar *path);
 #endif

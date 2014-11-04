@@ -17,7 +17,6 @@
  */
 
 #include "g_layer.h"
-#include "g_neuron.h"
 #include <string.h>
 #include <math.h>
 
@@ -214,12 +213,24 @@ GLayer* g_layer_new(gint id, gint ninput, gint nneurons)
 	return layer;
 }
 
+gint g_layer_get_id(GLayer *layer)
+{
+    g_return_if_fail(NULL != layer);
+
+    layer->priv = G_TYPE_INSTANCE_GET_PRIVATE (layer,
+			TYPE_G_LAYER, GLayerPrivate);
+	GLayerPrivate *priv = layer->priv;
+
+    return priv->id;
+}
+
 void g_layer_set_inputs(GLayer *layer, gdouble *in)
 {
 	gint i;
 
 	g_return_if_fail(NULL != layer);
 	g_return_if_fail(NULL != in);
+
 
 	layer->priv = G_TYPE_INSTANCE_GET_PRIVATE (layer,
 			TYPE_G_LAYER, GLayerPrivate);
@@ -342,4 +353,38 @@ void g_layer_update_layer_weights(GLayer *layer,
             g_neuron_update_weights(priv->neurons[i], di, learning_rate, inertial);
         }
     }
+}
+
+GNeuron* g_layer_get_nth_neuron(GLayer* layer, gint i)
+{
+    g_return_val_if_fail(NULL != layer, NULL);
+
+    layer->priv = G_TYPE_INSTANCE_GET_PRIVATE (layer,
+			TYPE_G_LAYER, GLayerPrivate);
+	GLayerPrivate *priv = layer->priv;
+
+    g_return_val_if_fail(i >= 0 && i < priv->nneurons, NULL);
+
+    return priv->neurons[i];
+}
+
+void g_layer_set_neuron_weights(GLayer *layer, GList *weights)
+{
+	gint i;
+	
+	g_return_if_fail(NULL != layer);
+	g_return_if_fail(NULL != weights);
+	
+    layer->priv = G_TYPE_INSTANCE_GET_PRIVATE (layer,
+			TYPE_G_LAYER, GLayerPrivate);
+	GLayerPrivate *priv = layer->priv;	
+
+	g_return_if_fail(g_list_length(weights) == priv->nneurons);
+
+	for (i = 0;i < priv->nneurons; ++i)
+	{
+		gdouble *weight = (gdouble *)g_list_nth_data(weights, i);
+		
+		g_neuron_set_weights(priv->neurons[i], weight);
+	}
 }
