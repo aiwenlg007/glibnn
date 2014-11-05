@@ -24,8 +24,11 @@
 
 #include <stdio.h>
 #include "g_neural_network.h"
+#include "g_datafile_reader.h"
+
 int main(int argc, char **argv)
 {
+	/*
 	gdouble in[4] = {1.0f, -0.5f, 0.5f, 0.0f};
 	gdouble out[2] = {1.0f, 0.0f};
 
@@ -54,6 +57,8 @@ int main(int argc, char **argv)
 	neural_network = g_neural_network_new_from_file("glibnn_test.txt");
 
     g_neural_network_save(neural_network, "glibnn_test_1.txt");
-
+    */ 
+	GDatafileReader *data_file = g_datafile_reader_new("data.txt");
+		
     return 0;
 }
