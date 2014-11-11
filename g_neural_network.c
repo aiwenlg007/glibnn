@@ -332,53 +332,53 @@ GNeuralNetwork* g_neural_network_new_from_file(gchar *path)
 	keyfile = g_key_file_new();
 	flags = G_KEY_FILE_KEEP_COMMENTS;
 
-	
+
 	if(g_key_file_load_from_file (keyfile, path, flags, &error ) )
-	{	
+	{
 		//first read properties
 		priv->inertie 		= g_key_file_get_double(keyfile, "properties", "inertial_rate", NULL);
 		priv->learning_rate = g_key_file_get_double(keyfile, "properties", "learning_rate", NULL);
 		priv->error_rate	= g_key_file_get_double(keyfile, "properties", "error_rate", 	NULL);
-		
+
 		//now read all layers and neurons
 		groups = g_key_file_get_groups(keyfile, NULL);
-		
+
 		while(*groups != NULL)
 		{
 			//properties have already be read
 			if( !g_strcmp0(*groups, "properties") == FALSE )
 			{
 				keys = g_key_file_get_keys(keyfile, *groups, NULL, NULL);
-			
+
 				while(*keys != NULL)
 				{
 					weights = g_key_file_get_double_list(keyfile, *groups, *keys, &size, NULL);
 					neuron_weights = g_list_append(neuron_weights, weights);
-					
+
 					keys ++;
 				}
-				
+
 				//should give size - 1 because there is a 1 entry for the bias
 				GLayer *layer = g_layer_new(priv->num_layers, size - 1 ,g_list_length(neuron_weights));
-				
+
 				//set the weight for all neurons of this layer
 				g_layer_set_neuron_weights(layer, neuron_weights);
-				
+
 				//add the layer to the list
 				priv->layers = g_list_append(priv->layers, layer);
 				priv->num_layers ++;
-				
+
 				//cleaning
 				for(iter = neuron_weights; iter; iter=iter->next)
 				{
 					g_free((gdouble *)(iter->data));
-				}				
+				}
 				g_list_free(neuron_weights);
 				neuron_weights = NULL;
-			
+
 				g_list_free(iter);
 			}
-			
+
 			groups ++;
 		}
 	}
@@ -388,6 +388,30 @@ GNeuralNetwork* g_neural_network_new_from_file(gchar *path)
 	}
 
 	g_key_file_free(keyfile);
-	
+
 	return neural_network;
+}
+
+void g_neural_network_train(GNeuralNetwork *neural_network, GList *inputs, GList *outputs)
+{
+    g_return_if_fail(NULL != neural_network);
+    g_return_if_fail(NULL != inputs);
+    g_return_if_fail(NULL != outputs);
+    g_return_if_fail(g_list_length(inputs) == g_list_length(outputs));
+
+    gint i;
+
+	neural_network->priv = G_TYPE_INSTANCE_GET_PRIVATE (neural_network,
+			TYPE_G_NEURAL_NETWORK, GNeuralNetworkPrivate);
+	GNeuralNetworkPrivate *priv = neural_network->priv;
+
+    for(i = 0; i< g_list_length(inputs); ++i)
+    {
+        gdouble *input = (gdouble *)g_list_nth_data(inputs, i);
+        gdouble *output= (gdouble *)g_list_nth_data(outputs, i);
+
+        g_neural_network_set_input(neural_network, input);
+        g_neural_network_set_desired_output(neural_network, output);
+        g_neural_network_back_propagation_learning(neural_network);
+    }
 }

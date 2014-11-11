@@ -63,4 +63,7 @@ void g_neural_network_set_desired_output(GNeuralNetwork *neural_network,
 										gdouble *desired);
 
 void g_neural_network_save(GNeuralNetwork *neural_network,const gchar *path);
+
+void g_neural_network_train(GNeuralNetwork *neural_network, GList *inputs, GList *outputs);
+
 #endif
