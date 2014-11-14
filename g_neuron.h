@@ -47,5 +47,7 @@ gdouble g_neuron_get_error_weighted(GNeuron* neuron, gint i);
 gdouble* g_neuron_get_weights(GNeuron *neuron);
 gint g_neuron_get_ninputs(GNeuron *neuron);
 void g_neuron_set_weights(GNeuron *neuron, gdouble* weights);
+GNeuron* g_neuron_create_input_neuron();
+void g_neuron_set_input_layer_inputs(GNeuron *neuron, gdouble in);
 G_END_DECLS
 #endif

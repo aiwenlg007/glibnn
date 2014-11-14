@@ -213,6 +213,25 @@ GNeuron* g_neuron_new(gint id, gint ninput)
 	return neuron;
 }
 
+GNeuron* g_neuron_create_input_neuron()
+{
+	GNeuron *neuron = (GNeuron *)g_object_new(TYPE_G_NEURON, NULL);
+
+	neuron->priv = G_TYPE_INSTANCE_GET_PRIVATE (neuron,
+			TYPE_G_NEURON, GNeuronPrivate);
+	GNeuronPrivate *priv = neuron->priv;
+	
+	priv->in 		      = (gdouble *)g_malloc0(2*sizeof(gdouble));
+	priv->weights 	      = (gdouble *)g_malloc0(2*sizeof(gdouble));
+    priv->old_corrections = (gdouble *)g_malloc0(2*sizeof(gdouble));
+	priv->ninput 	      = 2;
+	
+	priv->weights[0] = 1.0f;
+	priv->weights[1] = 0.0f;		
+	
+	return neuron;
+}
+
 void g_neuron_set_inputs(GNeuron* neuron, gdouble *in)
 {
 	g_return_if_fail(NULL != neuron);
@@ -224,6 +243,19 @@ void g_neuron_set_inputs(GNeuron* neuron, gdouble *in)
 
 	memmove(priv->in, in, (priv->ninput-1)*sizeof(gdouble));
 	priv->in[priv->ninput-1] = 1.0f;
+}
+
+void g_neuron_set_input_layer_inputs(GNeuron *neuron, gdouble in)
+{
+	g_return_if_fail(NULL != neuron);
+
+	neuron->priv = G_TYPE_INSTANCE_GET_PRIVATE (neuron,
+			TYPE_G_NEURON, GNeuronPrivate);
+	GNeuronPrivate *priv = neuron->priv;
+
+	priv->in[0] = in;
+	priv->in[1] = 1.0f;
+	priv->activation = 1;
 }
 
 void g_neuron_update_weights(GNeuron *neuron, gdouble di,gdouble learning_rate, gdouble inertial)

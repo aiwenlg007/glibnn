@@ -49,8 +49,7 @@ struct _GNeuralNetworkClass
 GType g_neural_network_get_type (void) G_GNUC_CONST;
 
 GNeuralNetwork* g_neural_network_new(GList *layers_list,
-									 GNeuralNetworkProperties ppt,
-									 const gint ninputs);
+									 GNeuralNetworkProperties ppt);
 
 GNeuralNetwork* g_neural_network_new_from_file(gchar *path);
 
@@ -65,5 +64,7 @@ void g_neural_network_set_desired_output(GNeuralNetwork *neural_network,
 void g_neural_network_save(GNeuralNetwork *neural_network,const gchar *path);
 
 void g_neural_network_train(GNeuralNetwork *neural_network, GList *inputs, GList *outputs);
+
+gdouble* g_neural_network_get_outputs(GNeuralNetwork *neural_network, gdouble *inputs);
 
 #endif

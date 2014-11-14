@@ -138,9 +138,10 @@ void g_layer_compute_outputs(GLayer *layer)
 			TYPE_G_LAYER, GLayerPrivate);
 	GLayerPrivate *priv = layer->priv;
 
+	
 	for(i = 0; i < priv->nneurons; ++i)
 	{
-        g_neuron_compute_activation(priv->neurons[i]);
+		if(priv->id != 0 ) g_neuron_compute_activation(priv->neurons[i]);
 
         priv->outputs[i] = g_neuron_get_activation(priv->neurons[i]);
 	}
@@ -204,10 +205,18 @@ GLayer* g_layer_new(gint id, gint ninput, gint nneurons)
 	priv->outputs	= (gdouble *)g_malloc0(nneurons*sizeof(gdouble));
 	priv->desired	= (gdouble *)g_malloc0(nneurons*sizeof(gdouble));
     priv->error     = (gdouble *)g_malloc0(nneurons*sizeof(gdouble));
-
+		
 	for(i = 0; i < priv->nneurons; ++i)
 	{
-		priv->neurons[i] = g_neuron_new(id, ninput);
+		if(priv->id != 0)
+		{
+			priv->neurons[i] = g_neuron_new(id, ninput);
+		}
+		else
+		{
+			//if it is an input layer then create inputs neurons
+			priv->neurons[i] = g_neuron_create_input_neuron();
+		}
 	}
 
 	return layer;
@@ -235,10 +244,22 @@ void g_layer_set_inputs(GLayer *layer, gdouble *in)
 	layer->priv = G_TYPE_INSTANCE_GET_PRIVATE (layer,
 			TYPE_G_LAYER, GLayerPrivate);
 	GLayerPrivate *priv = layer->priv;
-
-	for(i = 0; i < priv->nneurons; ++i)
+	
+	//if we have an hidden or output layer then each neuron receive the same inputs vector
+	//else we have an input layer which receive on input per neuron
+	if(priv->id != 0)
 	{
-		g_neuron_set_inputs(priv->neurons[i], in);
+		for(i = 0; i < priv->nneurons; ++i)
+		{
+			g_neuron_set_inputs(priv->neurons[i], in);
+		}
+	}
+	else
+	{
+		for(i = 0; i < priv->nneurons; ++i)
+		{
+			g_neuron_set_input_layer_inputs(priv->neurons[i], *(in+i));
+		}
 	}
 }
 
@@ -269,7 +290,6 @@ gdouble g_layer_get_error_rate(GLayer *layer)
 	gint i;
 	gdouble error_rate = 0.0f ;
 	gdouble *error_vector = NULL;
-	gdouble norme1 = 0.0f, norme2 = 0.0f;
 
 	//error rate fixed between 0 <= r < 1
 	g_return_val_if_fail(NULL != layer, -1);
@@ -279,18 +299,9 @@ gdouble g_layer_get_error_rate(GLayer *layer)
 	GLayerPrivate *priv = layer->priv;
 
 	error_vector = (gdouble *)g_malloc(priv->nneurons*sizeof(gdouble));
-
+	
 	for(i = 0; i < priv->nneurons; ++i)
-	{
-		norme1 += priv->desired[i];
-		norme2 += priv->outputs[i];
-	}
-
-	for(i = 0; i < priv->nneurons; ++i)
-	{
-        //output will be normalized et disired output too
-		priv->desired[i] /= norme1;
-		priv->outputs[i] /= norme2;
+	{        
         priv->error[i]  = priv->desired[i] - priv->outputs[i];
 
 		error_rate += 0.5*pow(priv->error[i], 2);
@@ -324,35 +335,40 @@ void g_layer_update_layer_weights(GLayer *layer,
 			TYPE_G_LAYER, GLayerPrivate);
 	GLayerPrivate *priv = layer->priv;
 
-    if( next_nneurons <= 0)
-    {
-        //for each neuron of the hidden layer
-        for(i = 0; i < priv->nneurons; ++i)
-        {
-            di = priv->outputs[i] * (1.0f - priv->outputs[i])*priv->error[i];
+	//we will modify weights of all hidden layers and of the output layer
+	//we should not modify the input layer 
+	if(priv->id != 0)
+	{
+		if( next_nneurons <= 0)
+		{
+			//for each neuron of the hidden layer
+			for(i = 0; i < priv->nneurons; ++i)
+			{
+				di = priv->outputs[i] * (1.0f - priv->outputs[i])*priv->error[i];
 
-            g_neuron_update_weights(priv->neurons[i], di, learning_rate, inertial);
-        }
-    }
-    else
-    {
-        //for each neuron of the hidden layer get the correction using the impact
-        //of this neuron on all child neurons
-        for(i = 0; i < priv->nneurons; ++i)
-        {
-            //get the impart of the neuron on the error in the next layer
-            som = 0.0f;
+				g_neuron_update_weights(priv->neurons[i], di, learning_rate, inertial);
+			}
+		}
+		else
+		{
+			//for each neuron of the hidden layer get the correction using the impact
+			//of this neuron on all child neurons
+			for(i = 0; i < priv->nneurons; ++i)
+			{
+				//get the impart of the neuron on the error in the next layer
+				som = 0.0f;
 
-            for(j = 0; j< next_nneurons; ++j)
-            {
-                som += g_neuron_get_error_weighted(priv->neurons[i], i);
-            }
+				for(j = 0; j< next_nneurons; ++j)
+				{
+					som += g_neuron_get_error_weighted(priv->neurons[i], i);
+				}
 
-            di = priv->outputs[i] * (1.0f - priv->outputs[i])*som;
+				di = priv->outputs[i] * (1.0f - priv->outputs[i])*som;
 
-            g_neuron_update_weights(priv->neurons[i], di, learning_rate, inertial);
-        }
-    }
+				g_neuron_update_weights(priv->neurons[i], di, learning_rate, inertial);
+			}
+		}
+	}
 }
 
 GNeuron* g_layer_get_nth_neuron(GLayer* layer, gint i)

@@ -112,7 +112,7 @@ GDatafileReader* g_datafile_reader_new(gchar *path)
 	gsize size;
 	gint idx = 0, count = 0;
 	double res;
-				
+
 	g_return_val_if_fail(NULL != path, 	NULL);
 	g_return_val_if_fail(g_file_test(path, G_FILE_TEST_EXISTS), NULL);
 
@@ -125,18 +125,18 @@ GDatafileReader* g_datafile_reader_new(gchar *path)
 	//first get a File
 	file = g_file_new_for_path(path);
 
-	//then a FileStream	
+	//then a FileStream
 	cancellable = g_cancellable_new();
 	stream 		= g_file_read(file, cancellable, NULL );
 	dataStream 	= g_data_input_stream_new(G_INPUT_STREAM(stream));
-	
+
 	while( (line = g_data_input_stream_read_line(dataStream, &size, cancellable, NULL)) != NULL)
 	{
 		if( !g_strcmp0(line, "") == FALSE && !g_strcmp0(line, "\n") == FALSE)
-		{			
+		{
 			gchar** list = g_strsplit_set(line, "=; \n", -1);
 			idx  = 0;
-			
+
 			//take into account the special case ""
 			while( list != NULL && *list != NULL)
 			{
@@ -144,8 +144,8 @@ GDatafileReader* g_datafile_reader_new(gchar *path)
 				count ++;
 				list ++;
 			}
-			idx++;
-			
+			//idx++;
+
 			if(priv->ninput == 0)
 			{
 				priv->ninput = idx;
@@ -154,10 +154,10 @@ GDatafileReader* g_datafile_reader_new(gchar *path)
 			{
 				g_return_val_if_fail(idx == priv->ninput, NULL);
 			}
-			
+
 			//construct a gdouble vector
 			gdouble* vector = (gdouble *)g_malloc0(idx*sizeof(gdouble));
-			
+
 			//rembobine
 			while( count != 0 )
 			{
@@ -165,23 +165,21 @@ GDatafileReader* g_datafile_reader_new(gchar *path)
 				count--;
 			}
 			idx = 0;
-			
+
 			while( list != NULL && *list != NULL)
-			{			
+			{
 				if(sscanf(*list, "%lf",&res) > 0)
 				{
-					vector[idx+1] = res;
-					idx++;	
+					vector[idx] = res;
+					idx++;
 				}
-								
+
 				list++;
 			}
-			
+
 			priv->datas = g_list_append(priv->datas, vector);
 		}
 	}
-
-	priv->datas = g_list_append(priv->datas, g_strdup(line));
 
 	return datafile_reader;
 }
@@ -189,21 +187,21 @@ GDatafileReader* g_datafile_reader_new(gchar *path)
 gint g_datafile_reader_get_ninput(GDatafileReader *datafile_reader)
 {
 	g_return_val_if_fail(NULL != datafile_reader, -1);
-	
+
 	datafile_reader->priv = G_TYPE_INSTANCE_GET_PRIVATE (datafile_reader,
 			TYPE_G_DATAFILE_READER, GDatafileReaderPrivate);
 	GDatafileReaderPrivate *priv = datafile_reader->priv;
-		
+
 	return priv->ninput;
 }
 
 GList* g_datafile_reader_get_data(GDatafileReader *datafile_reader)
 {
 	g_return_val_if_fail(NULL != datafile_reader, NULL);
-	
+
 	datafile_reader->priv = G_TYPE_INSTANCE_GET_PRIVATE (datafile_reader,
 			TYPE_G_DATAFILE_READER, GDatafileReaderPrivate);
-	GDatafileReaderPrivate *priv = datafile_reader->priv;	
-		
+	GDatafileReaderPrivate *priv = datafile_reader->priv;
+
 	return priv->datas;
 }

@@ -21,7 +21,7 @@
 #include "g_neuron.h"
 #include <string.h>
 #include <math.h>
-
+#define MAX_ITERS 50000
 enum
 {
 	PROP_0,
@@ -112,14 +112,12 @@ static void g_neural_network_init (GNeuralNetwork *neural_network){
 
 //build a neural_network
 GNeuralNetwork* g_neural_network_new(GList* layers_list,
-									 GNeuralNetworkProperties ppt,
-                                     gint ninputs)
+									 GNeuralNetworkProperties ppt)
 {
 	gint i;
-	gint npt = ninputs;
+	gint npt = 1;
 
     g_return_val_if_fail(NULL   != layers_list,                                     NULL);
-	g_return_val_if_fail(0 		!= ninputs, 								        NULL);
 	g_return_val_if_fail(0 		!= g_list_length(layers_list),				        NULL);
 	g_return_val_if_fail(0.0f <= ppt.property.learning_rate && ppt.property.learning_rate <= 1.0f, 	NULL);
 	g_return_val_if_fail(0.0f <= ppt.property.inertial_rate && ppt.property.inertial_rate <= 1.0f, 	NULL);
@@ -189,7 +187,7 @@ void g_neural_network_back_propagation_learning(GNeuralNetwork *neural_network)
 	GList 	*iter	    = NULL;
 	gdouble *out 	    = NULL;
     gint next_nneurons  = -1;
-
+    gint niter = 0;
 	//at the beginning the error is maximale
 	gdouble error 	= 1.0f;
 
@@ -221,10 +219,11 @@ void g_neural_network_back_propagation_learning(GNeuralNetwork *neural_network)
 		error = g_layer_get_error_rate(G_LAYER(g_list_nth_data(priv->layers,priv->num_layers -1)));
 
 		//if error rate not good back propagate the error
-		g_warning("error: %.10f", error);
+		//g_warning("error: %.10f", error);	
+
 
         g_list_free(iter);
-
+		next_nneurons = -1.0f;
         //get the error vector for the output layers
         for(iter = g_list_nth(priv->layers, priv->num_layers - 1); iter; iter = iter->prev)
         {
@@ -240,7 +239,11 @@ void g_neural_network_back_propagation_learning(GNeuralNetwork *neural_network)
                 next_nneurons);
         }
 
-	}while(error > priv->error_rate);
+    niter++;
+	}while(error > priv->error_rate && niter < MAX_ITERS);
+	
+	//if error rate not good back propagate the error
+	g_warning("error: %.10f", error);	
 }
 
 void g_neural_network_save(GNeuralNetwork *neural_network, const gchar* path)
@@ -414,4 +417,35 @@ void g_neural_network_train(GNeuralNetwork *neural_network, GList *inputs, GList
         g_neural_network_set_desired_output(neural_network, output);
         g_neural_network_back_propagation_learning(neural_network);
     }
+}
+
+gdouble* g_neural_network_get_outputs(GNeuralNetwork *neural_network, gdouble *inputs)
+{
+    gdouble *out = NULL;
+    GList *iter = NULL;
+
+    g_return_val_if_fail(NULL != neural_network, NULL);
+    g_return_val_if_fail(NULL != inputs, NULL);
+
+	neural_network->priv = G_TYPE_INSTANCE_GET_PRIVATE (neural_network,
+			TYPE_G_NEURAL_NETWORK, GNeuralNetworkPrivate);
+	GNeuralNetworkPrivate *priv = neural_network->priv;
+
+    //set the input
+    g_neural_network_set_input(neural_network, inputs);
+
+    //then propagate it to all layers
+    for(iter = priv->layers; iter; iter = iter->next)
+    {
+        g_layer_compute_outputs(G_LAYER(iter->data));
+
+        out = g_layer_get_outputs(G_LAYER(iter->data));
+
+        if((iter->next) != NULL)
+        {
+            g_layer_set_inputs(G_LAYER((iter->next)->data), out);
+        }
+    }
+
+    return g_layer_get_outputs(G_LAYER(g_list_nth_data(priv->layers, g_list_length(priv->layers)-1)));
 }
