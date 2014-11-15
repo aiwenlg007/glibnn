@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 {
 	/*
 	gint i,j;
-	gdouble in[2][4] = {{1.0f, 0.0f, 0.0f, 0.0f}, 
+	gdouble in[2][4] = {{1.0f, 0.0f, 0.0f, 0.0f},
 						{0.0f, 0.0f, 1.0f, 0.0f}};
 	gdouble out[2][2] = {{1.0f, 0.0f}, {0.0f, 1.0f}};
     GList *layers_list = NULL;
@@ -39,20 +39,20 @@ int main(int argc, char **argv)
     layers_list = g_list_append(layers_list, GINT_TO_POINTER(3));
     layers_list = g_list_append(layers_list, GINT_TO_POINTER(2));
     GNeuralNetworkProperties ppt = {
-        {.learning_rate  = 0.5f,
+        {.learning_rate  = 0.1f,
          .inertial_rate  = 0.5f,
-         .error_rate     = 0.01f}
+         .error_rate     = 0.1f}
     };
 	GNeuralNetwork *neural_network = g_neural_network_new(layers_list, ppt);
-	
+
 	g_neural_network_set_input(neural_network, in[0]);
 	g_neural_network_set_desired_output(neural_network, out[0]);
 	g_neural_network_back_propagation_learning(neural_network);
-	
+
 	g_neural_network_set_input(neural_network, in[1]);
 	g_neural_network_set_desired_output(neural_network, out[1]);
 	g_neural_network_back_propagation_learning(neural_network);
-	
+
     g_neural_network_save(neural_network, "glibnn_test.txt");
     g_object_unref(G_OBJECT(neural_network));
 	neural_network = g_neural_network_new_from_file("glibnn_test.txt");
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 		gdouble *o = g_neural_network_get_outputs(neural_network,in[0]);
 		for( i = 0; i <2; ++i) g_print("%f ", o[i]);
 		g_print("\n");
-	
+
 	*/
 	//reading inputs and outputs datas
 	GDatafileReader *inputs_file = g_datafile_reader_new("input.txt");
@@ -74,7 +74,7 @@ int main(int argc, char **argv)
     GList *outputs_datas= g_datafile_reader_get_data(outputs_file);
 
     gint i, j;
-	gdouble *in, *out, norme;
+	gdouble *in, *out,mean = 0.0f, max=-1.0f, min=1.0f;
 
     g_return_val_if_fail(g_list_length(inputs_datas) == g_list_length(outputs_datas), -1);
 
@@ -83,31 +83,47 @@ int main(int argc, char **argv)
     {
         in = (gdouble *)g_list_nth_data(inputs_datas, i);
 
-		norme = 0.0f;
-        for(j = 0; j < n_inputs; ++j ) norme += in[j]*in[j];
-       
-        norme = pow(norme, 0.5f);
+        mean = 0.0f;
+        min = 1.0f;
+        max = -1.0f;
+        for(j = 0; j < n_inputs; ++j )
+        {
+          max = max <= in[j] ? in[j] : max;
+          min = min >  in[j] ? in[j] : min;
+          mean += in[j]/(gdouble)n_inputs;
+        }
+
         for(j = 0; j < n_inputs; ++j)
         {
-			if(norme != 0.0f) in[j] /= norme;
+            in[j] -= mean;
+			if(max != min) in[j] /= (max - min);
         	g_print("%f ", in[j]);
         }
         g_print("\n");
     }
 
     g_print("%s\n", "Outputs datas");
+
     for(i = 0; i < g_list_length(outputs_datas); ++i)
     {
         out = (gdouble *)g_list_nth_data(outputs_datas, i);
 
-		norme = 0.0f;
-        for(j = 0; j < n_outputs; ++j ) norme += out[j]*out[j];
-		
-		norme = pow(norme, 0.5f);
-		
+
+        min = 1.0f;
+        max = -1.0f;
+        mean = 0.0f;
+
+        for(j = 0; j < n_outputs; ++j )
+        {
+          max = max <= out[j] ? out[j] : max;
+          min = min > out[j] ? out[j] : min;
+          mean += out[j]/(gdouble)n_outputs;
+		}
+
 		for(j=0; j< n_outputs; ++j)
 		{
-			if(norme != 0.0f) out[j] /= norme;
+            if(n_outputs > 1) out[j] -= mean;
+			if(max != min) out[j] /= (max - min);
 			g_print("%f ", out[j]);
 		}
         g_print("\n");
@@ -116,14 +132,14 @@ int main(int argc, char **argv)
     //create a new neural network
     GList *layers_list = NULL;
     layers_list = g_list_append(layers_list, GINT_TO_POINTER(n_inputs));
-    layers_list = g_list_append(layers_list, GINT_TO_POINTER(3));
+    layers_list = g_list_append(layers_list, GINT_TO_POINTER(5));
     layers_list = g_list_append(layers_list, GINT_TO_POINTER(n_outputs));
 
     //an union to store parameters
     GNeuralNetworkProperties ppt = {
-        {.learning_rate  = 0.5f,
-         .inertial_rate  = 0.3f,
-         .error_rate     = 0.05f}
+        {.learning_rate  = 0.1f,
+         .inertial_rate  = 0.1f,
+         .error_rate     = 0.3f}
     };
 
 	GNeuralNetwork *neural_network = g_neural_network_new(layers_list, ppt);
@@ -135,6 +151,7 @@ int main(int argc, char **argv)
     g_neural_network_save(neural_network, "alerte.txt");
     g_object_unref(G_OBJECT(neural_network));
 
+    g_print("\n\n");
     //rebuild a neural network using a file
 	neural_network = g_neural_network_new_from_file("alerte.txt");
 

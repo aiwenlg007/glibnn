@@ -131,6 +131,7 @@ gint g_layer_get_nneurons(GLayer *layer)
 void g_layer_compute_outputs(GLayer *layer)
 {
 	gint i;
+    gdouble max=-1.0f, min=1.0f, mean = 0.0f;
 
 	g_return_if_fail(NULL != layer);
 
@@ -138,13 +139,22 @@ void g_layer_compute_outputs(GLayer *layer)
 			TYPE_G_LAYER, GLayerPrivate);
 	GLayerPrivate *priv = layer->priv;
 
-	
+
 	for(i = 0; i < priv->nneurons; ++i)
 	{
 		if(priv->id != 0 ) g_neuron_compute_activation(priv->neurons[i]);
 
         priv->outputs[i] = g_neuron_get_activation(priv->neurons[i]);
-	}
+        mean += priv->outputs[i]/(gdouble)priv->nneurons;
+        max = max <= priv->outputs[i] ? priv->outputs[i] : max;
+        min = min  > priv->outputs[i] ? priv->outputs[i] : min;
+    }
+
+    for(i = 0; i < priv->nneurons; ++i)
+    {
+        if(priv->nneurons > 1) priv->outputs[i] -= mean;
+	    if(max != min) priv->outputs[i] /= (max - min);
+    }
 }
 
 gdouble* g_layer_get_outputs(GLayer *layer)
@@ -205,7 +215,7 @@ GLayer* g_layer_new(gint id, gint ninput, gint nneurons)
 	priv->outputs	= (gdouble *)g_malloc0(nneurons*sizeof(gdouble));
 	priv->desired	= (gdouble *)g_malloc0(nneurons*sizeof(gdouble));
     priv->error     = (gdouble *)g_malloc0(nneurons*sizeof(gdouble));
-		
+
 	for(i = 0; i < priv->nneurons; ++i)
 	{
 		if(priv->id != 0)
@@ -244,7 +254,7 @@ void g_layer_set_inputs(GLayer *layer, gdouble *in)
 	layer->priv = G_TYPE_INSTANCE_GET_PRIVATE (layer,
 			TYPE_G_LAYER, GLayerPrivate);
 	GLayerPrivate *priv = layer->priv;
-	
+
 	//if we have an hidden or output layer then each neuron receive the same inputs vector
 	//else we have an input layer which receive on input per neuron
 	if(priv->id != 0)
@@ -299,9 +309,9 @@ gdouble g_layer_get_error_rate(GLayer *layer)
 	GLayerPrivate *priv = layer->priv;
 
 	error_vector = (gdouble *)g_malloc(priv->nneurons*sizeof(gdouble));
-	
+
 	for(i = 0; i < priv->nneurons; ++i)
-	{        
+	{
         priv->error[i]  = priv->desired[i] - priv->outputs[i];
 
 		error_rate += 0.5*pow(priv->error[i], 2);
@@ -336,7 +346,7 @@ void g_layer_update_layer_weights(GLayer *layer,
 	GLayerPrivate *priv = layer->priv;
 
 	//we will modify weights of all hidden layers and of the output layer
-	//we should not modify the input layer 
+	//we should not modify the input layer
 	if(priv->id != 0)
 	{
 		if( next_nneurons <= 0)
@@ -387,20 +397,38 @@ GNeuron* g_layer_get_nth_neuron(GLayer* layer, gint i)
 void g_layer_set_neuron_weights(GLayer *layer, GList *weights)
 {
 	gint i;
-	
+
 	g_return_if_fail(NULL != layer);
 	g_return_if_fail(NULL != weights);
-	
+
     layer->priv = G_TYPE_INSTANCE_GET_PRIVATE (layer,
 			TYPE_G_LAYER, GLayerPrivate);
-	GLayerPrivate *priv = layer->priv;	
+	GLayerPrivate *priv = layer->priv;
 
 	g_return_if_fail(g_list_length(weights) == priv->nneurons);
 
 	for (i = 0;i < priv->nneurons; ++i)
 	{
 		gdouble *weight = (gdouble *)g_list_nth_data(weights, i);
-		
+
 		g_neuron_set_weights(priv->neurons[i], weight);
 	}
+}
+
+void g_layer_reset_weights(GLayer *layer)
+{
+    gint i;
+    g_return_if_fail(NULL != layer);
+
+    layer->priv = G_TYPE_INSTANCE_GET_PRIVATE (layer,
+			TYPE_G_LAYER, GLayerPrivate);
+	GLayerPrivate *priv = layer->priv;
+
+    if(priv->id != 0)
+    {
+        for(i=0; i<priv->nneurons; ++i)
+        {
+            g_neuron_set_random_weight(priv->neurons[i]);
+        }
+    }
 }

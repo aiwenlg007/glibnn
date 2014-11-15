@@ -113,7 +113,7 @@ static void g_neuron_init (GNeuron *neuron){
     priv->di              = 0;
 }
 
-static void g_neuron_set_random_weight(GNeuron *neuron)
+void g_neuron_set_random_weight(GNeuron *neuron)
 {
 	GRand* rand;
 	gint i;
@@ -161,7 +161,7 @@ void g_neuron_compute_activation(GNeuron *neuron)
 
 	gdouble acc = g_neuron_compute_accumulation(neuron);
 
-	priv->activation = 1.0f / ( 1.0f + exp(acc) );
+	priv->activation = 1.0f / ( 1.0f + exp(-acc) ) ;
 }
 
 gdouble g_neuron_get_activation(GNeuron *neuron)
@@ -220,15 +220,15 @@ GNeuron* g_neuron_create_input_neuron()
 	neuron->priv = G_TYPE_INSTANCE_GET_PRIVATE (neuron,
 			TYPE_G_NEURON, GNeuronPrivate);
 	GNeuronPrivate *priv = neuron->priv;
-	
+
 	priv->in 		      = (gdouble *)g_malloc0(2*sizeof(gdouble));
 	priv->weights 	      = (gdouble *)g_malloc0(2*sizeof(gdouble));
     priv->old_corrections = (gdouble *)g_malloc0(2*sizeof(gdouble));
 	priv->ninput 	      = 2;
-	
+
 	priv->weights[0] = 1.0f;
-	priv->weights[1] = 0.0f;		
-	
+	priv->weights[1] = 0.0f;
+
 	return neuron;
 }
 
@@ -242,7 +242,7 @@ void g_neuron_set_inputs(GNeuron* neuron, gdouble *in)
 	GNeuronPrivate *priv = neuron->priv;
 
 	memmove(priv->in, in, (priv->ninput-1)*sizeof(gdouble));
-	priv->in[priv->ninput-1] = 1.0f;
+	priv->in[priv->ninput-1] = -1.0f;
 }
 
 void g_neuron_set_input_layer_inputs(GNeuron *neuron, gdouble in)
@@ -254,8 +254,8 @@ void g_neuron_set_input_layer_inputs(GNeuron *neuron, gdouble in)
 	GNeuronPrivate *priv = neuron->priv;
 
 	priv->in[0] = in;
-	priv->in[1] = 1.0f;
-	priv->activation = 1;
+	priv->in[1] = -1.0f;
+	priv->activation = in;
 }
 
 void g_neuron_update_weights(GNeuron *neuron, gdouble di,gdouble learning_rate, gdouble inertial)
@@ -274,11 +274,13 @@ void g_neuron_update_weights(GNeuron *neuron, gdouble di,gdouble learning_rate, 
     //for all entries of the neuron
     for(j = 0; j < priv->ninput; ++j)
     {
-        correction = -learning_rate*di*priv->in[j] + inertial * priv->old_corrections[j];
 
-        priv->weights[j] += correction;
 
-        priv->old_corrections[j] = correction;
+		correction = -learning_rate*di*priv->in[j] + inertial * priv->old_corrections[j];
+
+		priv->weights[j] += correction;
+
+		priv->old_corrections[j] = correction;
     }
 }
 

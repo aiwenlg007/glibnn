@@ -52,5 +52,6 @@ gint g_layer_get_nneurons(GLayer *layer);
 gint g_layer_get_id(GLayer *layer);
 GNeuron* g_layer_get_nth_neuron(GLayer* layer, gint i);
 void g_layer_set_neuron_weights(GLayer *layer, GList *weights);
+void g_layer_reset_weights(GLayer *layer);
 G_END_DECLS
 #endif

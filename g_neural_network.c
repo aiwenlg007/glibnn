@@ -219,7 +219,7 @@ void g_neural_network_back_propagation_learning(GNeuralNetwork *neural_network)
 		error = g_layer_get_error_rate(G_LAYER(g_list_nth_data(priv->layers,priv->num_layers -1)));
 
 		//if error rate not good back propagate the error
-		//g_warning("error: %.10f", error);	
+		//g_warning("error: %.10f", error);
 
 
         g_list_free(iter);
@@ -241,9 +241,9 @@ void g_neural_network_back_propagation_learning(GNeuralNetwork *neural_network)
 
     niter++;
 	}while(error > priv->error_rate && niter < MAX_ITERS);
-	
+
 	//if error rate not good back propagate the error
-	g_warning("error: %.10f", error);	
+	//g_warning("error: %.10f", error);
 }
 
 void g_neural_network_save(GNeuralNetwork *neural_network, const gchar* path)
@@ -403,19 +403,18 @@ void g_neural_network_train(GNeuralNetwork *neural_network, GList *inputs, GList
     g_return_if_fail(g_list_length(inputs) == g_list_length(outputs));
 
     gint i;
-
 	neural_network->priv = G_TYPE_INSTANCE_GET_PRIVATE (neural_network,
 			TYPE_G_NEURAL_NETWORK, GNeuralNetworkPrivate);
 	GNeuralNetworkPrivate *priv = neural_network->priv;
 
     for(i = 0; i< g_list_length(inputs); ++i)
     {
-        gdouble *input = (gdouble *)g_list_nth_data(inputs, i);
-        gdouble *output= (gdouble *)g_list_nth_data(outputs, i);
+      gdouble *input = (gdouble *)g_list_nth_data(inputs, i);
+      gdouble *output= (gdouble *)g_list_nth_data(outputs, i);
 
-        g_neural_network_set_input(neural_network, input);
-        g_neural_network_set_desired_output(neural_network, output);
-        g_neural_network_back_propagation_learning(neural_network);
+      g_neural_network_set_input(neural_network, input);
+      g_neural_network_set_desired_output(neural_network, output);
+      g_neural_network_back_propagation_learning(neural_network);
     }
 }
 

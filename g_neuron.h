@@ -49,5 +49,6 @@ gint g_neuron_get_ninputs(GNeuron *neuron);
 void g_neuron_set_weights(GNeuron *neuron, gdouble* weights);
 GNeuron* g_neuron_create_input_neuron();
 void g_neuron_set_input_layer_inputs(GNeuron *neuron, gdouble in);
+void g_neuron_set_random_weight(GNeuron *neuron);
 G_END_DECLS
 #endif
